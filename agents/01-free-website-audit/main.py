@@ -1,6 +1,7 @@
+from typing import Optional
 import json
+import os
 import re
-import sys
 from datetime import datetime
 
 import requests
@@ -18,15 +19,16 @@ except ImportError:
     USE_AWS = False
 
 # ─────────────────────────────────────────────────────────────────────────────
-# CONFIG — for local testing, put your keys directly here.
-# For AWS deployment, these come from SSM (never hardcode in production).
+# CONFIG — reads from environment variables for local testing.
+# For AWS deployment, these come from SSM Parameter Store.
+# Never hardcode keys in production.
 # ─────────────────────────────────────────────────────────────────────────────
 LOCAL_CONFIG = {
-    "PAGESPEED_API_KEY": "YOUR_GOOGLE_PAGESPEED_API_KEY",  # get free from Google Cloud Console
-    "GHL_API_KEY":       "YOUR_GHL_API_KEY",               # from GHL Private Integration
-    "GHL_PIPELINE_ID":   "xEK3qOXCRezO6aoHN6AS",
-    "GHL_STAGE_NEW_LEAD": "993f30f0-5417-4a97-a622-2e8e0c376a32",
-    "LOCATION_ID":       "uXRl9WpDjS7LFjeYfQqD",
+    "PAGESPEED_API_KEY":  os.environ.get("PAGESPEED_API_KEY", ""),
+    "GHL_API_KEY":        os.environ.get("GHL_API_KEY", ""),
+    "GHL_PIPELINE_ID":    os.environ.get("GHL_PIPELINE_ID", "xEK3qOXCRezO6aoHN6AS"),
+    "GHL_STAGE_NEW_LEAD": os.environ.get("GHL_STAGE_NEW_LEAD", "993f30f0-5417-4a97-a622-2e8e0c376a32"),
+    "LOCATION_ID":        os.environ.get("LOCATION_ID", "uXRl9WpDjS7LFjeYfQqD"),
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -39,7 +41,7 @@ def get_config(key: str) -> str:
     return LOCAL_CONFIG.get(key, "")
 
 # ─────────────────────────────────────────────────────────────────────────────
-# GHL helper
+# GHL headers helper
 # ─────────────────────────────────────────────────────────────────────────────
 def ghl_headers(api_key: str) -> dict:
     return {
@@ -53,15 +55,21 @@ def ghl_headers(api_key: str) -> dict:
 # ─────────────────────────────────────────────────────────────────────────────
 def check_pagespeed(url: str, api_key: str) -> tuple:
     """Returns (mobile_score, desktop_score). Returns (-1, -1) on failure."""
-    if not api_key or api_key == "YOUR_GOOGLE_PAGESPEED_API_KEY":
+    if not api_key:
         print("  [PageSpeed] No API key — skipping checks 01 & 02")
         return -1, -1
     try:
         base = "https://www.googleapis.com/pagespeedonline/v5/runPagespeed"
         print("  [PageSpeed] Checking mobile speed...")
-        mobile_r = requests.get(f"{base}?url={url}&strategy=mobile&key={api_key}", timeout=20).json()
+        mobile_r = requests.get(
+            f"{base}?url={url}&strategy=mobile&key={api_key}",
+            timeout=30
+        ).json()
         print("  [PageSpeed] Checking desktop speed...")
-        desktop_r = requests.get(f"{base}?url={url}&strategy=desktop&key={api_key}", timeout=20).json()
+        desktop_r = requests.get(
+            f"{base}?url={url}&strategy=desktop&key={api_key}",
+            timeout=30
+        ).json()
         m = int(mobile_r["lighthouseResult"]["categories"]["performance"]["score"] * 100)
         d = int(desktop_r["lighthouseResult"]["categories"]["performance"]["score"] * 100)
         print(f"  [PageSpeed] Mobile: {m} | Desktop: {d}")
@@ -111,7 +119,7 @@ def run_checks(url: str, html: str, pagespeed_api_key: str) -> list:
         "id": "03", "name": "HTTPS / SSL",
         "score": 10 if is_https else 0,
         "raw_value": "HTTPS" if is_https else "HTTP only",
-        "issue": "No SSL certificate — browsers flag your site as 'Not Secure'",
+        "issue": "No SSL certificate — browsers flag your site as Not Secure",
     })
 
     # Check 04 — Title Tag
@@ -155,7 +163,7 @@ def run_checks(url: str, html: str, pagespeed_api_key: str) -> list:
         "id": "06", "name": "H1 Tag",
         "score": 10 if h1_text else 0,
         "raw_value": f'"{h1_text[:40]}"' if h1_text else "Missing",
-        "issue": "H1 tag missing — search engines can't identify your main topic",
+        "issue": "H1 tag missing — search engines can not identify your main topic",
     })
 
     # Check 07 — Schema Markup
@@ -171,7 +179,7 @@ def run_checks(url: str, html: str, pagespeed_api_key: str) -> list:
         "id": "07", "name": "Schema Markup",
         "score": s_score,
         "raw_value": s_val,
-        "issue": "No schema markup — Google can't identify your business type",
+        "issue": "No schema markup — Google can not identify your business type",
     })
 
     # Check 08 — Google Business Profile Link
@@ -185,7 +193,10 @@ def run_checks(url: str, html: str, pagespeed_api_key: str) -> list:
 
     # Check 09 — NAP (Name, Address, Phone)
     has_phone = bool(re.search(r"\(?\d{3}\)?[\s\-\.]\d{3}[\s\-\.]\d{4}", page_text))
-    has_address = bool(re.search(r"\d+\s+\w+\s+(st|ave|rd|blvd|dr|ln|way|ct|street|avenue|road|boulevard|drive|lane|court)", page_text, re.I))
+    has_address = bool(re.search(
+        r"\d+\s+\w+\s+(st|ave|rd|blvd|dr|ln|way|ct|street|avenue|road|boulevard|drive|lane|court)",
+        page_text, re.I
+    ))
     if has_phone and has_address:
         nap_score, nap_val = 10, "Name, address & phone found"
     elif has_phone:
@@ -214,11 +225,14 @@ def run_checks(url: str, html: str, pagespeed_api_key: str) -> list:
         "id": "11", "name": "Contact Form",
         "score": 10 if form else 0,
         "raw_value": "Form found" if form else "No form found",
-        "issue": "No contact form — visitors can't easily reach you",
+        "issue": "No contact form — visitors can not easily reach you",
     })
 
     # Check 12 — Reviews / Social Proof
-    review_keywords = ["testimonial", "review", "stars", "rating", "rated", "customer said", "client said", "5 star", "★"]
+    review_keywords = [
+        "testimonial", "review", "stars", "rating",
+        "rated", "customer said", "client said", "5 star"
+    ]
     has_reviews = any(kw in page_text.lower() for kw in review_keywords)
     checks.append({
         "id": "12", "name": "Reviews / Social Proof",
@@ -239,43 +253,72 @@ def run_checks(url: str, html: str, pagespeed_api_key: str) -> list:
     return checks
 
 # ─────────────────────────────────────────────────────────────────────────────
-# GHL — Create contact
+# GHL — Create contact then create opportunity separately
 # ─────────────────────────────────────────────────────────────────────────────
-def create_ghl_contact(data: dict, api_key: str, pipeline_id: str, stage_id: str, location_id: str) -> str | None:
-    if not api_key or api_key == "YOUR_GHL_API_KEY":
+def create_ghl_contact(
+    data: dict,
+    api_key: str,
+    pipeline_id: str,
+    stage_id: str,
+    location_id: str
+) -> Optional[str]:
+    if not api_key:
         print("  [GHL] No API key — skipping contact creation")
         return None
     try:
-        payload = {
-            "locationId": location_id,
-            "firstName": data.get("first_name", ""),
-            "email": data["email"],
-            "phone": data.get("phone", ""),
+        # Step 1 — Create contact (no pipeline fields here)
+        contact_payload = {
+            "locationId":  location_id,
+            "firstName":   data.get("first_name", "Website"),
+            "email":       data.get("email", ""),
+            "phone":       data.get("phone", ""),
             "companyName": data.get("business_name", ""),
-            "source": "landing-page-audit",
-            "tags": ["audit-completed"],
+            "source":      "landing-page-audit",
+            "tags":        ["audit-completed"],
             "customFields": [
                 {"key": "your_website",  "field_value": data["website_url"]},
                 {"key": "audit_score",   "field_value": str(data["audit_score"])},
                 {"key": "audit_grade",   "field_value": data["audit_grade"]},
                 {"key": "audit_date",    "field_value": datetime.utcnow().isoformat() + "Z"},
             ],
-            "pipelineId":      pipeline_id,
-            "pipelineStageId": stage_id,
         }
         resp = requests.post(
             "https://services.leadconnectorhq.com/contacts/",
             headers=ghl_headers(api_key),
-            json=payload,
+            json=contact_payload,
             timeout=10,
         )
-        if resp.status_code in (200, 201):
-            contact_id = resp.json().get("contact", {}).get("id")
-            print(f"  [GHL] Contact created: {contact_id}")
-            return contact_id
-        else:
-            print(f"  [GHL] Failed: {resp.status_code} — {resp.text[:200]}")
+        if resp.status_code not in (200, 201):
+            print(f"  [GHL] Contact failed: {resp.status_code} — {resp.text[:200]}")
             return None
+
+        contact_id = resp.json().get("contact", {}).get("id")
+        print(f"  [GHL] Contact created: {contact_id}")
+
+        # Step 2 — Create opportunity with pipeline stage
+        opp_payload = {
+            "pipelineId":      pipeline_id,
+            "pipelineStageId": stage_id,
+            "contactId":       contact_id,
+            "locationId":      location_id,
+            "name":            f"{data.get('business_name', 'Website Audit')} — SEO Local",
+            "status":          "open",
+            "monetaryValue":   797,
+        }
+        opp_resp = requests.post(
+            "https://services.leadconnectorhq.com/opportunities/",
+            headers=ghl_headers(api_key),
+            json=opp_payload,
+            timeout=10,
+        )
+        if opp_resp.status_code in (200, 201):
+            opp_id = opp_resp.json().get("opportunity", {}).get("id")
+            print(f"  [GHL] Opportunity created: {opp_id}")
+        else:
+            print(f"  [GHL] Opportunity failed: {opp_resp.status_code} — {opp_resp.text[:200]}")
+
+        return contact_id
+
     except Exception as e:
         print(f"  [GHL] Exception: {e}")
         return None
@@ -320,7 +363,10 @@ def run_audit(payload: dict) -> dict:
     # Step 2 — Fetch HTML
     print("[Audit] Step 2: Fetching HTML...")
     try:
-        html_resp = requests.get(website_url, timeout=12, headers={"User-Agent": "Mozilla/5.0"})
+        html_resp = requests.get(
+            website_url, timeout=12,
+            headers={"User-Agent": "Mozilla/5.0"}
+        )
         html = html_resp.text
         print(f"  HTML fetched ({len(html)} chars)")
     except Exception as e:
@@ -334,7 +380,12 @@ def run_audit(payload: dict) -> dict:
     # Step 4 — Calculate score and grade
     total_score = sum(c["score"] for c in checks)
     max_score   = 130
-    grade = "A" if total_score >= 110 else "B" if total_score >= 85 else "C" if total_score >= 55 else "D"
+    grade = (
+        "A" if total_score >= 110 else
+        "B" if total_score >= 85 else
+        "C" if total_score >= 55 else
+        "D"
+    )
     print(f"[Audit] Score: {total_score}/{max_score} — Grade: {grade}")
 
     # Step 5 — Top 3 issues (lowest scoring)
@@ -344,34 +395,34 @@ def run_audit(payload: dict) -> dict:
         for c in sorted_checks[:3]
     ]
 
-    # Step 6 — Create GHL contact
+    # Step 6 — Create GHL contact + opportunity
     print("[Audit] Step 6: Creating GHL contact...")
     create_ghl_contact(
         {
-            "website_url": website_url,
+            "website_url":   website_url,
             "business_name": business_name,
-            "email": email,
-            "first_name": first_name,
-            "phone": phone,
-            "audit_score": total_score,
-            "audit_grade": grade,
+            "email":         email,
+            "first_name":    first_name,
+            "phone":         phone,
+            "audit_score":   total_score,
+            "audit_grade":   grade,
         },
         ghl_api_key, pipeline_id, stage_id, location_id,
     )
 
     # Step 7 — Return result
     return {
-        "status": "success",
-        "score": total_score,
-        "max_score": max_score,
-        "grade": grade,
+        "status":        "success",
+        "score":         total_score,
+        "max_score":     max_score,
+        "grade":         grade,
         "business_name": business_name,
-        "website_url": website_url,
-        "top_3_issues": top_3_issues,
-        "all_checks": checks,        # full data — only shown locally, NOT sent to landing page
-        "cta": "Book your free strategy call to see your full 13-point report, competitor comparison, and 90-day fix roadmap.",
-        "agent": "freeWebsiteAudit",
-        "version": "1.0",
+        "website_url":   website_url,
+        "top_3_issues":  top_3_issues,
+        "all_checks":    checks,
+        "cta":           "Book your free strategy call to see your full 13-point report, competitor comparison, and 90-day fix roadmap.",
+        "agent":         "freeWebsiteAudit",
+        "version":       "1.1",
     }
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -388,18 +439,23 @@ if USE_AWS:
 # LOCAL TEST RUNNER — python main.py
 # ─────────────────────────────────────────────────────────────────────────────
 if __name__ == "__main__":
-    # ── Change this URL to test any website ──
+    print("=== SEO Local - Free Website Audit ===")
+    website = input("Enter website URL: ").strip()
+    email   = input("Enter your email: ").strip()
+    fname   = input("Enter your first name: ").strip()
+    biz     = input("Enter business name: ").strip()
+    phone   = input("Enter phone number (optional, press Enter to skip): ").strip()
+
     test_payload = {
-        "website_url":   "https://example.com",
-        "business_name": "Example Business",
-        "email":         "test@example.com",
-        "first_name":    "Test",
-        "phone":         "6025550001",
+        "website_url":   website,
+        "email":         email,
+        "first_name":    fname,
+        "business_name": biz,
+        "phone":         phone,
     }
 
     result = run_audit(test_payload)
 
-    # Pretty print the output
     print("\n" + "="*60)
     print("AUDIT RESULT")
     print("="*60)
@@ -413,7 +469,7 @@ if __name__ == "__main__":
     print()
     print("ALL 13 CHECKS (full breakdown):")
     for c in result.get("all_checks", []):
-        status = "✓" if c["score"] >= 7 else "~" if c["score"] >= 4 else "✗"
+        status  = "✓" if c["score"] >= 7 else "~" if c["score"] >= 4 else "✗"
         pending = " (Pending)" if c.get("pending") else ""
         print(f"  {status} Check {c['id']}: {c['name']:30s} {c['score']:2d}/10  [{c.get('raw_value','')}]{pending}")
     print()
