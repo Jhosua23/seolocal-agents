@@ -5,11 +5,13 @@ on:
     branches: [ main ]
     paths:
       - 'agents/**'
+      - 'bridge/**'
 
 jobs:
   deploy-agent-01:
     name: Deploy Agent 01 - Free Website Audit
     runs-on: ubuntu-latest
+    if: contains(toJson(github.event.head_commit.modified), 'agents/01-free-website-audit')
 
     steps:
       - name: Checkout code
@@ -55,7 +57,7 @@ jobs:
 
       - name: Wait for READY status
         run: |
-          for i in {1..10}; do
+          for i in {1..20}; do
             STATUS=$(aws bedrock-agentcore-control get-agent-runtime \
               --agent-runtime-id freeWebsiteAudit-E2ssUd9ZUU \
               --region us-east-1 \
@@ -77,6 +79,36 @@ jobs:
           aws bedrock-agentcore-control update-agent-runtime-endpoint \
             --agent-runtime-id freeWebsiteAudit-E2ssUd9ZUU \
             --endpoint-name production \
-            --target-version $VERSION \
+            --agent-runtime-version $VERSION \
             --region us-east-1
           echo "Deployed version $VERSION to production"
+
+  deploy-bridge:
+    name: Deploy Bridge Lambda
+    runs-on: ubuntu-latest
+    if: contains(toJson(github.event.head_commit.modified), 'bridge/')
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Zip bridge.py
+        run: |
+          cd bridge
+          zip ../bridge.zip bridge.py
+
+      - name: Deploy bridge Lambda
+        run: |
+          aws lambda update-function-code \
+            --function-name seolocal-audit-bridge \
+            --zip-file fileb://bridge.zip \
+            --region us-east-1 \
+            --no-cli-pager
+          echo "Bridge Lambda deployed!"
