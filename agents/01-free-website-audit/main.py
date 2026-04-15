@@ -1,3 +1,4 @@
+# SEO Local - Agent 01 - Free Website Audit - v1.1
 from typing import Optional
 import json
 import os
