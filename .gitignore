@@ -1,0 +1,8 @@
+﻿venv/
+__pycache__/
+*.pyc
+.env
+result.json
+main_b64.txt
+payload.json
+response.json

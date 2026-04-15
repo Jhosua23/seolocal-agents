@@ -1,0 +1,11 @@
+﻿bedrock-agentcore>=0.0.1
+boto3>=1.35.0
+requests>=2.31.0
+beautifulsoup4>=4.12.0
+psycopg2-binary>=2.9.0
+reportlab>=4.0.0
+Pillow>=10.0.0
+matplotlib>=3.8.0
+numpy>=1.26.0
+anthropic>=0.25.0
+typing_extensions>=4.0.0
