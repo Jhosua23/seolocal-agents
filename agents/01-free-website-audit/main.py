@@ -434,11 +434,12 @@ if USE_AWS:
     @app.entrypoint
     def free_website_audit(payload: dict) -> dict:
         return run_audit(payload)
+    app.run()
 
 # ─────────────────────────────────────────────────────────────────────────────
 # LOCAL TEST RUNNER — python main.py
 # ─────────────────────────────────────────────────────────────────────────────
-if __name__ == "__main__":
+if __name__ == "__main__" and not USE_AWS:
     print("=== SEO Local - Free Website Audit ===")
     website = input("Enter website URL: ").strip()
     email   = input("Enter your email: ").strip()
@@ -478,5 +479,3 @@ if __name__ == "__main__":
     with open("result.json", "w") as f:
         json.dump(result, f, indent=2)
 
-    if USE_AWS:
-        app.run()
