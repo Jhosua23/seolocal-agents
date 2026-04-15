@@ -1,3 +1,4 @@
+# SEO Local - Agent 01 - Free Website Audit - v1.1
 from typing import Optional
 import json
 import os
@@ -479,3 +480,8 @@ if __name__ == "__main__" and not USE_AWS:
     with open("result.json", "w") as f:
         json.dump(result, f, indent=2)
 
+<<<<<<< HEAD
+=======
+    if USE_AWS:
+        app.run()
+>>>>>>> 2a57ca2883405f6e18baedefbf5e180b9bdb9ac3

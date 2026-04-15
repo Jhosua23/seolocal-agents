@@ -1,0 +1,82 @@
+﻿name: Deploy SEO Local Agents
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'agents/**'
+
+jobs:
+  deploy-agent-01:
+    name: Deploy Agent 01 - Free Website Audit
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Encode main.py
+        run: |
+          base64 -w0 agents/01-free-website-audit/main.py > main_b64.txt
+          echo "B64=$(cat main_b64.txt)" >> $GITHUB_ENV
+
+      - name: Build deployment zip
+        run: |
+          aws lambda invoke \
+            --function-name agentcore-builder \
+            --region us-east-1 \
+            --payload "{\"packages\":[\"bedrock-agentcore>=0.0.1\",\"boto3>=1.35.0\",\"requests>=2.31.0\",\"beautifulsoup4>=4.12.0\"],\"main_py\":\"${{ env.B64 }}\",\"s3_key\":\"01-free-website-audit-v${{ github.run_number }}.zip\",\"bucket\":\"agentcore-skills-518692946031\"}" \
+            --cli-binary-format raw-in-base64-out \
+            response.json
+          cat response.json
+
+      - name: Copy zip to AgentCore bucket
+        run: |
+          aws s3 cp \
+            s3://agentcore-skills-518692946031/01-free-website-audit-v${{ github.run_number }}.zip \
+            s3://bedrock-agentcore-code-518692946031-us-east-1/01-free-website-audit-v${{ github.run_number }}.zip \
+            --region us-east-1
+
+      - name: Update AgentCore Runtime
+        run: |
+          aws bedrock-agentcore-control update-agent-runtime \
+            --agent-runtime-id freeWebsiteAudit-E2ssUd9ZUU \
+            --agent-runtime-artifact "codeConfiguration={code={s3={bucket=bedrock-agentcore-code-518692946031-us-east-1,prefix=01-free-website-audit-v${{ github.run_number }}.zip}},runtime=PYTHON_3_12,entryPoint=main.py}" \
+            --role-arn arn:aws:iam::518692946031:role/bciq-agentcore-runtime-role \
+            --network-configuration networkMode=PUBLIC \
+            --region us-east-1
+
+      - name: Wait for READY status
+        run: |
+          for i in {1..10}; do
+            STATUS=$(aws bedrock-agentcore-control get-agent-runtime \
+              --agent-runtime-id freeWebsiteAudit-E2ssUd9ZUU \
+              --region us-east-1 \
+              --query 'status' --output text)
+            echo "Status: $STATUS"
+            if [ "$STATUS" = "READY" ]; then
+              echo "Agent is READY!"
+              break
+            fi
+            sleep 5
+          done
+
+      - name: Update endpoint to new version
+        run: |
+          VERSION=$(aws bedrock-agentcore-control get-agent-runtime \
+            --agent-runtime-id freeWebsiteAudit-E2ssUd9ZUU \
+            --region us-east-1 \
+            --query 'agentRuntimeVersion' --output text)
+          aws bedrock-agentcore-control update-agent-runtime-endpoint \
+            --agent-runtime-id freeWebsiteAudit-E2ssUd9ZUU \
+            --endpoint-name production \
+            --target-version $VERSION \
+            --region us-east-1
+          echo "Deployed version $VERSION to production"
