@@ -1,73 +1,34 @@
 import json
 import boto3
 
-# Agent ARN mapping
 AGENTS = {
     "/audit/website": {
         "arn": "arn:aws:bedrock-agentcore:us-east-1:518692946031:runtime/freeWebsiteAudit-E2ssUd9ZUU",
         "qualifier": "production"
     },
-    "/rankings/report": {
-        "arn": "AGENT_02_ARN_HERE",
-        "qualifier": "production"
-    },
-    "/rank/confirm": {
-        "arn": "AGENT_04_ARN_HERE",
-        "qualifier": "production"
-    },
-    "/ai/visibility": {
-        "arn": "AGENT_05_ARN_HERE",
-        "qualifier": "production"
-    },
-    "/demo/book": {
-        "arn": "AGENT_06_ARN_HERE",
-        "qualifier": "production"
-    },
-    "/lead/route": {
-        "arn": "AGENT_07_ARN_HERE",
-        "qualifier": "production"
-    },
     "/lead/nurture": {
-        "arn": "AGENT_08_ARN_HERE",
+        "arn": "arn:aws:bedrock-agentcore:us-east-1:518692946031:runtime/leadNurtureSequencer-a7DSnRCXjm",
         "qualifier": "production"
     },
-    "/pre/call": {
-        "arn": "AGENT_09_ARN_HERE",
-        "qualifier": "production"
-    },
-    "/lce/data": {
-        "arn": "AGENT_10_ARN_HERE",
-        "qualifier": "production"
-    },
-    "/demo/outcome": {
-        "arn": "AGENT_11_ARN_HERE",
-        "qualifier": "production"
-    },
-    "/pipeline/manage": {
-        "arn": "AGENT_12_ARN_HERE",
-        "qualifier": "production"
-    },
-    "/report/deepdive": {
-        "arn": "AGENT_13_ARN_HERE",
-        "qualifier": "production"
-    },
-    "/report/heatmap": {
-        "arn": "AGENT_14_ARN_HERE",
-        "qualifier": "production"
-    },
-    "/keyword/intel": {
-        "arn": "AGENT_15_ARN_HERE",
-        "qualifier": "production"
-    },
+    "/rankings/report": {"arn": "AGENT_02_ARN_HERE", "qualifier": "production"},
+    "/rank/confirm": {"arn": "AGENT_04_ARN_HERE", "qualifier": "production"},
+    "/ai/visibility": {"arn": "AGENT_05_ARN_HERE", "qualifier": "production"},
+    "/demo/book": {"arn": "AGENT_06_ARN_HERE", "qualifier": "production"},
+    "/lead/route": {"arn": "AGENT_07_ARN_HERE", "qualifier": "production"},
+    "/pre/call": {"arn": "AGENT_09_ARN_HERE", "qualifier": "production"},
+    "/lce/data": {"arn": "AGENT_10_ARN_HERE", "qualifier": "production"},
+    "/demo/outcome": {"arn": "AGENT_11_ARN_HERE", "qualifier": "production"},
+    "/pipeline/manage": {"arn": "AGENT_12_ARN_HERE", "qualifier": "production"},
+    "/report/deepdive": {"arn": "AGENT_13_ARN_HERE", "qualifier": "production"},
+    "/report/heatmap": {"arn": "AGENT_14_ARN_HERE", "qualifier": "production"},
+    "/keyword/intel": {"arn": "AGENT_15_ARN_HERE", "qualifier": "production"},
 }
 
 def handler(event, context):
     try:
-        # Get path
         path = event.get("rawPath", "/")
         method = event.get("requestContext", {}).get("http", {}).get("method", "GET")
 
-        # Handle CORS preflight
         if method == "OPTIONS":
             return {
                 "statusCode": 200,
@@ -79,14 +40,10 @@ def handler(event, context):
                 "body": ""
             }
 
-        # Check if path exists
         if path not in AGENTS:
             return {
                 "statusCode": 404,
-                "headers": {
-                    "Content-Type": "application/json",
-                    "Access-Control-Allow-Origin": "*"
-                },
+                "headers": {"Content-Type": "application/json", "Access-Control-Allow-Origin": "*"},
                 "body": json.dumps({
                     "error": "Endpoint not found",
                     "path": path,
@@ -94,51 +51,33 @@ def handler(event, context):
                 })
             }
 
-        # Check if agent is deployed
         agent = AGENTS[path]
         if "ARN_HERE" in agent["arn"]:
             return {
                 "statusCode": 503,
-                "headers": {
-                    "Content-Type": "application/json",
-                    "Access-Control-Allow-Origin": "*"
-                },
-                "body": json.dumps({
-                    "error": "Agent not deployed yet",
-                    "path": path
-                })
+                "headers": {"Content-Type": "application/json", "Access-Control-Allow-Origin": "*"},
+                "body": json.dumps({"error": "Agent not deployed yet", "path": path})
             }
 
-        # Parse body
         body = json.loads(event.get("body", "{}"))
-
-        # Call AgentCore
         client = boto3.client("bedrock-agentcore", region_name="us-east-1")
         response = client.invoke_agent_runtime(
             agentRuntimeArn=agent["arn"],
             qualifier=agent["qualifier"],
             payload=json.dumps(body).encode()
         )
-
-        # Read response
         result_raw = response["response"].read()
         result = json.loads(result_raw.decode("utf-8"))
 
         return {
             "statusCode": 200,
-            "headers": {
-                "Content-Type": "application/json",
-                "Access-Control-Allow-Origin": "*"
-            },
+            "headers": {"Content-Type": "application/json", "Access-Control-Allow-Origin": "*"},
             "body": json.dumps(result)
         }
 
     except Exception as e:
         return {
             "statusCode": 500,
-            "headers": {
-                "Content-Type": "application/json",
-                "Access-Control-Allow-Origin": "*"
-            },
+            "headers": {"Content-Type": "application/json", "Access-Control-Allow-Origin": "*"},
             "body": json.dumps({"error": str(e)})
         }
