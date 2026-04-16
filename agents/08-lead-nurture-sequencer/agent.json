@@ -1,7 +1,7 @@
-﻿{
+{
   "name": "leadNurtureSequencer",
-  "runtime_id": "",
-  "runtime_arn": "",
+  "runtime_id": "leadNurtureSequencer-a7DSnRCXjm",
+  "runtime_arn": "arn:aws:bedrock-agentcore:us-east-1:518692946031:runtime/leadNurtureSequencer-a7DSnRCXjm",
   "runtime_role": "arn:aws:iam::518692946031:role/bciq-agentcore-runtime-role",
   "s3_deploy_key": "08-lead-nurture-sequencer-v1.zip",
   "packages": [
