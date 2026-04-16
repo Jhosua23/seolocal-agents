@@ -109,8 +109,8 @@ def check_rank(keyword: str, business_name: str, city: str, state: str, website_
 
     payload = [{
         "keyword":       query,
-        "location_name": location,
-        "language_name": "English",
+        "location_code": 2840,
+        "language_code": "en",
         "depth":         10,
         "se_domain":     "google.com",
     }]
@@ -275,5 +275,4 @@ if _SDK:
                 "message": str(exc),
             }
 
-    if __name__ == "__main__" and not _SDK:
-        app.run()
+    app.run()
