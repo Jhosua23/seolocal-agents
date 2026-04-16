@@ -6,12 +6,15 @@ AGENTS = {
         "arn": "arn:aws:bedrock-agentcore:us-east-1:518692946031:runtime/freeWebsiteAudit-E2ssUd9ZUU",
         "qualifier": "production"
     },
+    "/rank/check": {
+        "arn": "arn:aws:bedrock-agentcore:us-east-1:518692946031:runtime/rankConfirmation-UKTjAi9IvU",
+        "qualifier": "production"
+    },
     "/lead/nurture": {
         "arn": "arn:aws:bedrock-agentcore:us-east-1:518692946031:runtime/leadNurtureSequencer-a7DSnRCXjm",
         "qualifier": "production"
     },
     "/rankings/report": {"arn": "AGENT_02_ARN_HERE", "qualifier": "production"},
-    "/rank/confirm": {"arn": "AGENT_04_ARN_HERE", "qualifier": "production"},
     "/ai/visibility": {"arn": "AGENT_05_ARN_HERE", "qualifier": "production"},
     "/demo/book": {"arn": "AGENT_06_ARN_HERE", "qualifier": "production"},
     "/lead/route": {"arn": "AGENT_07_ARN_HERE", "qualifier": "production"},
