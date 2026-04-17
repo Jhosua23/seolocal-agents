@@ -9,6 +9,7 @@ AGENTS = {
     "/keyword/intel":   {"arn": "arn:aws:bedrock-agentcore:us-east-1:518692946031:runtime/keywordIntelligence-yOnG2CArl4", "qualifier": "production"},
     "/lce/data":        {"arn": "arn:aws:bedrock-agentcore:us-east-1:518692946031:runtime/lceDataLayer-ZXFbwjFWSt", "qualifier": "production"},
     "/pipeline/manage": {"arn": "arn:aws:bedrock-agentcore:us-east-1:518692946031:runtime/ghlPipelineManager-K6sziUEHnP", "qualifier": "production"},
+    "/report/heatmap":  {"arn": "arn:aws:bedrock-agentcore:us-east-1:518692946031:runtime/heatMapGenerator-0YOwA1Aezz", "qualifier": "production"},
     "/rankings/report": {"arn": "AGENT_02_ARN_HERE", "qualifier": "production"},
     "/ai/visibility":   {"arn": "AGENT_05_ARN_HERE", "qualifier": "production"},
     "/demo/book":       {"arn": "AGENT_06_ARN_HERE", "qualifier": "production"},
@@ -16,7 +17,6 @@ AGENTS = {
     "/pre/call":        {"arn": "AGENT_09_ARN_HERE", "qualifier": "production"},
     "/demo/outcome":    {"arn": "AGENT_11_ARN_HERE", "qualifier": "production"},
     "/report/deepdive": {"arn": "AGENT_13_ARN_HERE", "qualifier": "production"},
-    "/report/heatmap":  {"arn": "AGENT_14_ARN_HERE", "qualifier": "production"},
 }
 
 def handler(event, context):
