@@ -322,7 +322,7 @@ def fetch_live_data(business_name: str, city: str,
         return "gbp", fetch_gbp_data(business_name, city)
 
     def run_speed():
-        return "speed", fetch_pagespeed(website_url) if website_url else ("speed", {})
+        return ("speed", fetch_pagespeed(website_url)) if website_url else ("speed", {})
 
     with ThreadPoolExecutor(max_workers=3) as executor:
         futures = [
