@@ -1,7 +1,7 @@
-﻿{
+{
   "name": "keywordIntelligence",
-  "runtime_id": "",
-  "runtime_arn": "",
+  "runtime_id": "keywordIntelligence-yOnG2CArl4",
+  "runtime_arn": "arn:aws:bedrock-agentcore:us-east-1:518692946031:runtime/keywordIntelligence-yOnG2CArl4",
   "runtime_role": "arn:aws:iam::518692946031:role/bciq-agentcore-runtime-role",
   "s3_deploy_key": "15-keyword-intelligence-v1.zip",
   "packages": [

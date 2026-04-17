@@ -19,7 +19,7 @@ AGENTS = {
         "qualifier": "production"
     },
     "/keyword/intel": {
-        "arn": "AGENT_15_ARN_HERE",
+        "arn": "arn:aws:bedrock-agentcore:us-east-1:518692946031:runtime/keywordIntelligence-yOnG2CArl4",
         "qualifier": "production"
     },
     "/rankings/report": {"arn": "AGENT_02_ARN_HERE", "qualifier": "production"},
