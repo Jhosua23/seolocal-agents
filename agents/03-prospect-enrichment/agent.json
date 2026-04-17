@@ -1,7 +1,7 @@
-﻿{
+{
   "name": "prospectEnrichment",
-  "runtime_id": "",
-  "runtime_arn": "",
+  "runtime_id": "prospectEnrichment-yP6W6d4IqG",
+  "runtime_arn": "arn:aws:bedrock-agentcore:us-east-1:518692946031:runtime/prospectEnrichment-yP6W6d4IqG",
   "runtime_role": "arn:aws:iam::518692946031:role/bciq-agentcore-runtime-role",
   "s3_deploy_key": "03-prospect-enrichment-v1.zip",
   "packages": [
