@@ -1,0 +1,18 @@
+{
+  "name": "heatMapGenerator",
+  "runtime_id": "",
+  "runtime_arn": "",
+  "runtime_role": "arn:aws:iam::518692946031:role/bciq-agentcore-runtime-role",
+  "s3_deploy_key": "heat-map-generator-v1.zip",
+  "packages": [
+    "bedrock-agentcore>=1.6.1",
+    "boto3>=1.35.0",
+    "requests>=2.31.0",
+    "matplotlib>=3.8.0",
+    "numpy>=1.26.0",
+    "Pillow>=10.0.0",
+    "reportlab>=4.0.0"
+  ],
+  "env_vars_ssm_path": "/seolocal/agents/heatMapGenerator/",
+  "env_vars_ssm_region": "us-east-1"
+}
