@@ -20,7 +20,7 @@ SSM Parameters required (all already in your AWS SSM):
   GHL_STAGE_CLOSED_LOST    - String  (be66e86c-1e88-4f70-9f32-569d28ee90ce)
   GHL_SEQUENCE_NURTURE_ID  - String  (GHL workflow ID — ask Chuck)
   GHL_DEFAULT_ASSIGNEE_ID  - String  (4yPiyMcdXbdTUh0Om8m2jp — Jay Leonard)
-  CALENDLY_BOOKING_URL     - String  (https://calendly.com/seolocal/demo)
+  GHL_CALENDAR_ID          - String  (GHL native booking calendar ID)
 
 Trigger  : GHL Webhook POST  action=start  (new audit-completed contact)
            GHL Webhook POST  action=stop   (prospect booked)
@@ -284,7 +284,7 @@ def ghl_enroll_sequence(contact_id: str, sequence_id: str) -> bool:
     resp = _ghl(
         "POST",
         f"{GHL_BASE}/contacts/{contact_id}/workflow/{sequence_id}",
-        json={"workflowId": sequence_id},
+        json={},
     )
     ok = resp.status_code in (200, 201)
     if not ok:
@@ -457,7 +457,7 @@ def build_vars(payload: dict, contact: dict) -> dict:
         "issue3":        issue3,
         "city":          city,
         "vertical":      vertical,
-        "calendly":      get_ssm("CALENDLY_BOOKING_URL"),
+        "calendly":      get_ssm("GHL_CALENDAR_ID"),
     }
 
 
