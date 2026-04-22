@@ -11,6 +11,7 @@ AGENTS = {
     "/pipeline/manage": {"arn": "arn:aws:bedrock-agentcore:us-east-1:518692946031:runtime/ghlPipelineManager-K6sziUEHnP", "qualifier": "production"},
     "/report/heatmap":  {"arn": "arn:aws:bedrock-agentcore:us-east-1:518692946031:runtime/heatMapGenerator-0YOwA1Aezz", "qualifier": "production"},
     "/post/call":       {"arn": "arn:aws:bedrock-agentcore:us-east-1:518692946031:runtime/postCallRouter-uo64VRGWlo", "qualifier": "production"},
+    "/client/onboard":  {"arn": "arn:aws:bedrock-agentcore:us-east-1:518692946031:runtime/clientOnboarding-k3Is2IFp4c", "qualifier": "production"},
     "/rankings/report": {"arn": "AGENT_02_ARN_HERE", "qualifier": "production"},
     "/ai/visibility":   {"arn": "AGENT_05_ARN_HERE", "qualifier": "production"},
     "/demo/book":       {"arn": "AGENT_06_ARN_HERE", "qualifier": "production"},
