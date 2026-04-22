@@ -1,0 +1,9 @@
+{
+  "name": "postCallRouter",
+  "runtime_id": "postCallRouter-uo64VRGWlo",
+  "runtime_arn": "arn:aws:bedrock-agentcore:us-east-1:518692946031:runtime/postCallRouter-uo64VRGWlo",
+  "runtime_role": "arn:aws:iam::518692946031:role/bciq-agentcore-runtime-role",
+  "s3_deploy_key": "20-post-call-router-v1.zip",
+  "packages": ["bedrock-agentcore>=0.0.1", "boto3>=1.35.0", "requests>=2.31.0"],
+  "endpoint": "production"
+}
