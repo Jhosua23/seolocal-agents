@@ -7,7 +7,7 @@ set -e
 
 AGENT_NAME="clientComms"
 S3_KEY="client-comms-v1.zip"
-STAGING_BUCKET="openclaw-skills"
+STAGING_BUCKET="agentcore-skills-518692946031"
 CODE_BUCKET="bedrock-agentcore-code-518692946031-us-east-1"
 IAM_ROLE="arn:aws:iam::518692946031:role/bciq-agentcore-runtime-role"
 REGION="us-east-1"

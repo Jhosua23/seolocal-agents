@@ -1,8 +1,21 @@
-﻿venv/
+# Test outputs from agent invocations
+**/ping_*.json
+**/invoke_response.json
+**/response.json
+
+# Build artifacts
+**/main_b64.txt
+**/payload.json
+**/*.bak
+**/*.zip
+bridge.zip
+
+# Python
 __pycache__/
 *.pyc
+*.pyo
+.venv/
+venv/
+
+# Environment
 .env
-result.json
-main_b64.txt
-payload.json
-response.json
