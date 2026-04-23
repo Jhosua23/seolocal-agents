@@ -240,8 +240,30 @@ def _extract_domain(url: str) -> str:
 
 
 def _location_str(city: str, state: str) -> str:
-    parts = [p for p in [city, state, "United States"] if p]
-    return ",".join(parts)
+    # DataForSEO location_name requires exact match from their location DB.
+    # Format: "City,State,United States" — ALL 3 parts or country-only fallback.
+    # State abbreviations (AZ, CA, TX) not accepted — needs full name or omit.
+    US_STATE_MAP = {
+        "AL": "Alabama", "AK": "Alaska", "AZ": "Arizona", "AR": "Arkansas",
+        "CA": "California", "CO": "Colorado", "CT": "Connecticut", "DE": "Delaware",
+        "FL": "Florida", "GA": "Georgia", "HI": "Hawaii", "ID": "Idaho",
+        "IL": "Illinois", "IN": "Indiana", "IA": "Iowa", "KS": "Kansas",
+        "KY": "Kentucky", "LA": "Louisiana", "ME": "Maine", "MD": "Maryland",
+        "MA": "Massachusetts", "MI": "Michigan", "MN": "Minnesota", "MS": "Mississippi",
+        "MO": "Missouri", "MT": "Montana", "NE": "Nebraska", "NV": "Nevada",
+        "NH": "New Hampshire", "NJ": "New Jersey", "NM": "New Mexico", "NY": "New York",
+        "NC": "North Carolina", "ND": "North Dakota", "OH": "Ohio", "OK": "Oklahoma",
+        "OR": "Oregon", "PA": "Pennsylvania", "RI": "Rhode Island", "SC": "South Carolina",
+        "SD": "South Dakota", "TN": "Tennessee", "TX": "Texas", "UT": "Utah",
+        "VT": "Vermont", "VA": "Virginia", "WA": "Washington", "WV": "West Virginia",
+        "WI": "Wisconsin", "WY": "Wyoming",
+    }
+    state_full = US_STATE_MAP.get(state.upper().strip()) if state else None
+    if not state_full and state and len(state) > 2:
+        state_full = state.strip().title()
+    if city and state_full:
+        return f"{city},{state_full},United States"
+    return "United States"
 
 
 def _ctr_estimate(position: int, search_volume: int) -> int:
@@ -486,6 +508,14 @@ def get_top_3_gaps(serp_results: list) -> list:
 # ----------------------------------------------------------------
 # STEP 7 — Claude narrative generation
 # ----------------------------------------------------------------
+def _as_text(val) -> str:
+    """Coerce Claude response field to string. Claude may return list
+    per ambiguous system prompt. Join lists with paragraph breaks."""
+    if isinstance(val, list):
+        return "\n\n".join(str(x).strip() for x in val if x)
+    return str(val).strip() if val else ""
+
+
 def generate_narrative(
     business_name: str,
     city: str,
@@ -824,17 +854,17 @@ def build_pdf_report(
         ))
         story.append(Spacer(1, 0.05 * inch))
 
-    gap_text = narrative.get("gap_analysis", "")
+    gap_text = _as_text(narrative.get("gap_analysis", ""))
     if gap_text:
         story.append(Paragraph(gap_text, body_style))
 
     # ── SECTION 5: What This Means ───────────────────────────
     story.append(Paragraph("Section 5 — What This Means", h2_style))
     story.append(Paragraph(
-        narrative.get("summary", ""), body_style
+        _as_text(narrative.get("summary", "")), body_style
     ))
     story.append(Paragraph(
-        narrative.get("what_this_means", ""), body_style
+        _as_text(narrative.get("what_this_means", "")), body_style
     ))
 
     # ── SECTION 6: CTA ───────────────────────────────────────
