@@ -11,6 +11,8 @@ AGENTS = {
     "/pipeline/manage": {"arn": "arn:aws:bedrock-agentcore:us-east-1:518692946031:runtime/ghlPipelineManager-K6sziUEHnP", "qualifier": "production"},
     "/report/heatmap":  {"arn": "arn:aws:bedrock-agentcore:us-east-1:518692946031:runtime/heatMapGenerator-0YOwA1Aezz", "qualifier": "production"},
     "/report/ranking":  {"arn": "arn:aws:bedrock-agentcore:us-east-1:518692946031:runtime/rankingReportGenerator-Uf2mDE3Dn6", "qualifier": "production"},
+    "/nurture/cold/enroll": {"arn": "arn:aws:bedrock-agentcore:us-east-1:518692946031:runtime/coldNurture-O5DzQD49LP", "qualifier": "production"},
+    "/nurture/cold/send":   {"arn": "arn:aws:bedrock-agentcore:us-east-1:518692946031:runtime/coldNurture-O5DzQD49LP", "qualifier": "production"},
     "/post/call":       {"arn": "arn:aws:bedrock-agentcore:us-east-1:518692946031:runtime/postCallRouter-uo64VRGWlo", "qualifier": "production"},
     "/client/onboard":  {"arn": "arn:aws:bedrock-agentcore:us-east-1:518692946031:runtime/clientOnboarding-k3Is2IFp4c", "qualifier": "production"},
     "/client/comms":    {"arn": "arn:aws:bedrock-agentcore:us-east-1:518692946031:runtime/clientComms-9JXjDjF01H", "qualifier": "production"},
@@ -34,7 +36,7 @@ def handler(event, context):
         agent = AGENTS[path]
         if "ARN_HERE" in agent["arn"]:
             return {"statusCode": 503, "headers": {"Content-Type": "application/json", "Access-Control-Allow-Origin": "*"}, "body": json.dumps({"error": "Agent not deployed yet", "path": path})}
-        body     = json.loads(event.get("body", "{}"))
+        body     = json.loads(event.get("body", "{}")); body.setdefault("path", path)
         client   = boto3.client("bedrock-agentcore", region_name="us-east-1")
         response = client.invoke_agent_runtime(agentRuntimeArn=agent["arn"], qualifier=agent["qualifier"], payload=json.dumps(body).encode())
         result   = json.loads(response["response"].read().decode("utf-8"))
