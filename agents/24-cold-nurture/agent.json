@@ -1,0 +1,31 @@
+{
+  "name": "coldNurture",
+  "description": "Agent 24 — Cold Nurture. 6-month authority drip sequence (8 touches) for leads tagged MOD:COLD_NURTURE. Auto-stops on hand-raise or conversion.",
+  "version": "1.0.0",
+  "runtime": "python3.12",
+  "entrypoint": "main.py",
+  "account_id": "518692946031",
+  "region": "us-east-1",
+  "architecture": "arm64",
+  "memory_mb": 1024,
+  "timeout_seconds": 120,
+  "paths": [
+    "/nurture/cold/enroll",
+    "/nurture/cold/send",
+    "/ping"
+  ],
+  "ssm_required": [
+    "GHL_API_KEY",
+    "GHL_LOCATION_ID",
+    "GHL_PIPELINE_RESURRECTION_ID",
+    "GHL_STAGE_RESURRECTION_COLD_NURTURE",
+    "GHL_CALENDAR_BOOKING_URL"
+  ],
+  "ssm_optional": [
+    "COLD_NURTURE_TARGET_ARN",
+    "RDS_HOST",
+    "RDS_DB_NAME",
+    "RDS_USERNAME",
+    "RDS_PASSWORD"
+  ]
+}
