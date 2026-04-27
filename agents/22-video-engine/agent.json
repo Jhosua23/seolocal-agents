@@ -1,0 +1,53 @@
+{
+  "name": "videoEngine",
+  "description": "Agent 22 — Video Engine. Central AI video dispatcher. Any agent calls /video/generate with a video_type + contact fields. Validates whitelist, checks per-type feature flag, enforces 7-day dedupe, generates via HeyGen using Chuck's Digital Twin, polls to completion, delivers via GHL SMS + email, stamps tags + custom fields, writes RDS.",
+  "version": "1.0.0",
+  "runtime": "python3.12",
+  "entrypoint": "main.py",
+  "account_id": "518692946031",
+  "region": "us-east-1",
+  "architecture": "arm64",
+  "memory_mb": 1024,
+  "timeout_seconds": 600,
+  "paths": [
+    "/video/generate",
+    "/ping"
+  ],
+  "ssm_required": [
+    "GHL_API_KEY",
+    "HEYGEN_API_KEY"
+  ],
+  "ssm_optional": [
+    "GHL_LOCATION_ID",
+    "HEYGEN_AVATAR_ID",
+    "HEYGEN_VOICE_ID",
+    "HEYGEN_SPEED_TO_LEAD_ACTIVE",
+    "HEYGEN_HOT_LEAD_ACTIVE",
+    "HEYGEN_PRE_DEMO_ACTIVE",
+    "HEYGEN_CLOSED_WON_ACTIVE",
+    "HEYGEN_ONBOARDING_ACTIVE",
+    "HEYGEN_MONTHLY_RESULTS_ACTIVE",
+    "HEYGEN_HAND_RAISE_ACTIVE",
+    "HEYGEN_MILESTONE_ACTIVE",
+    "HEYGEN_CONFIG_S3_KEY",
+    "S3_REPORTS_BUCKET",
+    "SLACK_BOT_TOKEN",
+    "SLACK_CHUCK_USER_ID",
+    "RDS_HOST",
+    "RDS_DB_NAME",
+    "RDS_USERNAME",
+    "RDS_PASSWORD"
+  ],
+  "supported_video_types": [
+    "speed_to_lead",
+    "hot_lead",
+    "pre_demo",
+    "closed_won",
+    "onboarding_welcome",
+    "monthly_results",
+    "hand_raise",
+    "milestone_page1",
+    "milestone_top3",
+    "milestone_90day"
+  ]
+}
