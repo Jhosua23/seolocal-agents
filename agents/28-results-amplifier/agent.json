@@ -1,0 +1,36 @@
+{
+  "name": "resultsAmplifier",
+  "description": "Agent 28 — Results Amplifier. Runs monthly (1st of month) + on milestone webhooks. Detects Page 1 / Top 3 / 90-Day Win ranking milestones, fires review-capture SMS, scores incoming testimonials across 5 dimensions, routes high-score ones to content-team as case-study candidates, posts celebrations to #c-suite-command-center, DMs Chuck on 90-day wins, chain-invokes Agent 22 for milestone videos.",
+  "version": "1.0.0",
+  "runtime": "python3.12",
+  "entrypoint": "main.py",
+  "account_id": "518692946031",
+  "region": "us-east-1",
+  "architecture": "arm64",
+  "memory_mb": 1024,
+  "timeout_seconds": 300,
+  "paths": [
+    "/amplify/monthly",
+    "/amplify/milestone",
+    "/amplify/testimonial",
+    "/ping"
+  ],
+  "ssm_required": [
+    "GHL_API_KEY"
+  ],
+  "ssm_optional": [
+    "GHL_LOCATION_ID",
+    "SLACK_BOT_TOKEN",
+    "SLACK_CHANNEL_COMMAND_CENTER",
+    "SLACK_CHANNEL_CONTENT_TEAM",
+    "SLACK_CHUCK_USER_ID",
+    "S3_REPORTS_BUCKET",
+    "S3_CASE_STUDIES_PREFIX",
+    "HEYGEN_MILESTONE_ACTIVE",
+    "VIDEO_ENGINE_RUNTIME_ARN",
+    "RDS_HOST",
+    "RDS_DB_NAME",
+    "RDS_USERNAME",
+    "RDS_PASSWORD"
+  ]
+}
