@@ -13,6 +13,8 @@ AGENTS = {
     "/report/ranking":  {"arn": "arn:aws:bedrock-agentcore:us-east-1:518692946031:runtime/rankingReportGenerator-Uf2mDE3Dn6", "qualifier": "production"},
     "/nurture/cold/enroll": {"arn": "arn:aws:bedrock-agentcore:us-east-1:518692946031:runtime/coldNurture-O5DzQD49LP", "qualifier": "production"},
     "/nurture/cold/send":   {"arn": "arn:aws:bedrock-agentcore:us-east-1:518692946031:runtime/coldNurture-O5DzQD49LP", "qualifier": "production"},
+    "/video/generate":  {"arn": "arn:aws:bedrock-agentcore:us-east-1:518692946031:runtime/videoEngine-PXz31M9zAF", "qualifier": "production"},
+    "/video/generate":  {"arn": "arn:aws:bedrock-agentcore:us-east-1:518692946031:runtime/videoEngine-PXz31M9zAF", "qualifier": "production"},
     "/post/call":       {"arn": "arn:aws:bedrock-agentcore:us-east-1:518692946031:runtime/postCallRouter-uo64VRGWlo", "qualifier": "production"},
     "/client/onboard":  {"arn": "arn:aws:bedrock-agentcore:us-east-1:518692946031:runtime/clientOnboarding-k3Is2IFp4c", "qualifier": "production"},
     "/client/comms":    {"arn": "arn:aws:bedrock-agentcore:us-east-1:518692946031:runtime/clientComms-9JXjDjF01H", "qualifier": "production"},
