@@ -1,0 +1,36 @@
+{
+  "name": "pipelineMonitor",
+  "description": "Agent 26 — Pipeline Monitor. Runs every 4 hours via EventBridge cron. Collects KPIs across Sales/Fulfillment/Resurrection pipelines + Recurly MRR/churn, scores against Gold Standards, and posts a Block Kit report card to #c-suite-command-center. RED metrics DM Chuck.",
+  "version": "1.0.0",
+  "runtime": "python3.12",
+  "entrypoint": "main.py",
+  "account_id": "518692946031",
+  "region": "us-east-1",
+  "architecture": "arm64",
+  "memory_mb": 1024,
+  "timeout_seconds": 180,
+  "paths": [
+    "/monitor/pipeline",
+    "/ping"
+  ],
+  "ssm_required": [
+    "GHL_API_KEY",
+    "GHL_LOCATION_ID",
+    "GHL_PIPELINE_ID"
+  ],
+  "ssm_optional": [
+    "GHL_PIPELINE_FULFILLMENT_ID",
+    "GHL_PIPELINE_RESURRECTION_ID",
+    "RECURLY_API_KEY",
+    "RECURLY_SUBDOMAIN",
+    "SLACK_BOT_TOKEN",
+    "SLACK_CHANNEL_COMMAND_CENTER",
+    "SLACK_CHUCK_USER_ID",
+    "S3_REPORTS_BUCKET",
+    "GOLD_STANDARDS_S3_KEY",
+    "RDS_HOST",
+    "RDS_DB_NAME",
+    "RDS_USERNAME",
+    "RDS_PASSWORD"
+  ]
+}
