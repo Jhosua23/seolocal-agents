@@ -1,0 +1,90 @@
+{
+  "spec_version": "1.0",
+  "agent_id": "agent-01-free-website-audit",
+  "agent_name": "freeWebsiteAudit",
+  "tenant_id": "tenant-001",
+  "phase": "phase1",
+  "description": "Lead-gen audit. Landing page POSTs website URL + contact info. Agent runs 13-check audit (PageSpeed, schema, GBP, reviews, mobile, etc), computes score 0-130 and grade A-F, returns top 3 issues only (teaser). Creates GHL contact at New Lead stage with audit tag + custom fields. Background-fires Agent 03 (Prospect Enrichment). Synchronous response under 10 seconds.",
+  "trigger": {
+    "type": "http_webhook",
+    "webhook_source": "Landing page form on seolocal.us and try.seolocal.us"
+  },
+  "paths": [
+    {
+      "path": "/audit/website",
+      "handler": "handle_audit",
+      "description": "Run 13-check website audit, score, return teaser, create GHL contact, fire-and-forget Agent 03 enrichment.",
+      "inputs": [
+        { "name": "website_url", "type": "string", "required": true, "description": "Full URL including protocol", "validation": "http(s):// URL, must be reachable" },
+        { "name": "business_name", "type": "string", "required": true, "description": "Used in GHL contact + score display" },
+        { "name": "email", "type": "string", "required": true, "description": "GHL contact creation", "validation": "valid email format" },
+        { "name": "first_name", "type": "string", "required": false, "description": "Contact first name" },
+        { "name": "phone", "type": "string", "required": false, "description": "E.164 or 10-digit US phone" }
+      ],
+      "outputs": [
+        { "name": "ok", "type": "boolean", "description": "Success indicator" },
+        { "name": "score", "type": "integer", "description": "Audit score 0-130" },
+        { "name": "grade", "type": "string", "description": "Letter grade A through F" },
+        { "name": "top_3_issues", "type": "list", "description": "Top 3 issues only — teaser, not full report" },
+        { "name": "contact_id", "type": "string", "description": "GHL contact ID created" },
+        { "name": "agent", "type": "string", "description": "freeWebsiteAudit" },
+        { "name": "status", "type": "string", "description": "completed | failed" }
+      ]
+    },
+    {
+      "path": "/ping",
+      "handler": "handle_ping",
+      "description": "Health check.",
+      "inputs": [],
+      "outputs": [
+        { "name": "ok", "type": "boolean" },
+        { "name": "agent", "type": "string" },
+        { "name": "status", "type": "string" }
+      ]
+    }
+  ],
+  "ssm_params": {
+    "required": [
+      "PAGESPEED_API_KEY",
+      "GHL_API_KEY",
+      "GHL_PIPELINE_ID",
+      "GHL_STAGE_NEW_LEAD"
+    ],
+    "optional": [
+      "GHL_LOCATION_ID",
+      "AGENT_03_ENDPOINT_ARN"
+    ]
+  },
+  "apis": ["pagespeed", "ghl"],
+  "adapters": {
+    "crm": true,
+    "billing": false
+  },
+  "memory": {
+    "enabled": true,
+    "strategy": "semantic",
+    "namespace_key": "email"
+  },
+  "chain_invokes": [
+    {
+      "target_agent_id": "agent-03-prospect-enrichment",
+      "trigger_condition": "Fire-and-forget after audit complete (background, non-blocking)",
+      "ssm_arn_key": "AGENT_03_ENDPOINT_ARN"
+    }
+  ],
+  "lambda_config": {
+    "memory_mb": 1024,
+    "timeout_seconds": 30,
+    "extra_packages": ["beautifulsoup4"]
+  },
+  "llm_tasks": [],
+  "metadata": {
+    "assigned_dev": "Jhosua",
+    "spec_authored_by": "Jhosua (back-converted from deployed Agent-01)",
+    "spec_authored_date": "2026-04-28",
+    "links": {
+      "markdown_spec": "AGENT-01-free-website-audit.md",
+      "github_path": "agents/01-free-website-audit/"
+    }
+  }
+}

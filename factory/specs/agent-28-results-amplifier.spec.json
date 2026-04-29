@@ -1,0 +1,129 @@
+{
+  "spec_version": "1.0",
+  "agent_id": "agent-28-results-amplifier",
+  "agent_name": "resultsAmplifier",
+  "tenant_id": "tenant-001",
+  "phase": "phase2",
+  "description": "Detects ranking milestones (page1/top3/90day), scores testimonials across 5 dimensions, routes high-quality testimonials to content team as case-study candidates, posts celebrations to Slack, DMs Chuck on 90-day wins, chain-invokes Agent 22 for milestone videos. Three workflows: monthly cron scan, milestone webhook, testimonial webhook.",
+  "trigger": {
+    "type": "http_webhook",
+    "webhook_source": "EventBridge cron (monthly), GHL workflows (milestone, testimonial submitted)"
+  },
+  "paths": [
+    {
+      "path": "/amplify/monthly",
+      "handler": "handle_monthly_scan",
+      "description": "Monthly cron — scan all active clients for ranking milestones detected in past 30 days. Fire review-capture SMS for each.",
+      "inputs": [],
+      "outputs": [
+        { "name": "ok", "type": "boolean" },
+        { "name": "clients_scanned", "type": "integer" },
+        { "name": "milestones_fired", "type": "integer" },
+        { "name": "per_client", "type": "list", "description": "Breakdown per client" }
+      ]
+    },
+    {
+      "path": "/amplify/milestone",
+      "handler": "handle_milestone",
+      "description": "Webhook from rank tracker — handle a specific milestone for one contact. Chain-invokes Agent 22 if HEYGEN_MILESTONE_ACTIVE=true.",
+      "inputs": [
+        { "name": "contact_id", "type": "string", "required": true, "description": "GHL contact ID", "validation": "GHL contact_id format" },
+        { "name": "milestone_type", "type": "string", "required": true, "description": "page1 | top3 | 90day", "validation": "must be in milestone whitelist" },
+        { "name": "keyword", "type": "string", "required": true, "description": "The keyword that hit the milestone" },
+        { "name": "first_name", "type": "string", "required": false },
+        { "name": "city", "type": "string", "required": false }
+      ],
+      "outputs": [
+        { "name": "ok", "type": "boolean" },
+        { "name": "milestone_recorded", "type": "boolean" },
+        { "name": "video_chain_invoked", "type": "boolean" },
+        { "name": "slack_posted", "type": "boolean" }
+      ]
+    },
+    {
+      "path": "/amplify/testimonial",
+      "handler": "handle_testimonial",
+      "description": "Webhook from review platform — score incoming testimonial across 5 dimensions, classify into content pool, route to content team if case-study candidate.",
+      "inputs": [
+        { "name": "contact_id", "type": "string", "required": true, "description": "GHL contact ID" },
+        { "name": "text", "type": "string", "required": true, "description": "Testimonial text" },
+        { "name": "stars", "type": "integer", "required": true, "description": "Star rating 1-5" }
+      ],
+      "outputs": [
+        { "name": "ok", "type": "boolean" },
+        { "name": "score", "type": "integer", "description": "Total score across 5 dimensions" },
+        { "name": "breakdown", "type": "dict", "description": "Per-dimension scores" },
+        { "name": "pool", "type": "string", "description": "SOCIAL_PROOF_ASSET | CASE_STUDY_CANDIDATE | TIER_2_TESTIMONIAL" },
+        { "name": "tag_applied", "type": "string" },
+        { "name": "content_team_notified", "type": "boolean" }
+      ]
+    },
+    {
+      "path": "/ping",
+      "handler": "handle_ping",
+      "description": "Health check.",
+      "inputs": [],
+      "outputs": [
+        { "name": "ok", "type": "boolean" },
+        { "name": "agent", "type": "string" },
+        { "name": "status", "type": "string" }
+      ]
+    }
+  ],
+  "ssm_params": {
+    "required": [
+      "GHL_API_KEY"
+    ],
+    "optional": [
+      "GHL_LOCATION_ID",
+      "S3_REPORTS_BUCKET",
+      "S3_CASE_STUDIES_PREFIX",
+      "RDS_HOST",
+      "RDS_DB_NAME",
+      "RDS_USERNAME",
+      "RDS_PASSWORD",
+      "SLACK_BOT_TOKEN",
+      "SLACK_CHANNEL_COMMAND_CENTER",
+      "SLACK_CHANNEL_CONTENT_TEAM",
+      "SLACK_CHUCK_USER_ID",
+      "HEYGEN_MILESTONE_ACTIVE",
+      "VIDEO_ENGINE_RUNTIME_ARN"
+    ]
+  },
+  "apis": ["ghl", "anthropic", "s3", "slack", "rds"],
+  "adapters": {
+    "crm": true,
+    "billing": false
+  },
+  "memory": {
+    "enabled": false
+  },
+  "chain_invokes": [
+    {
+      "target_agent_id": "agent-22-video-engine",
+      "trigger_condition": "On milestone detected AND HEYGEN_MILESTONE_ACTIVE=true",
+      "ssm_arn_key": "VIDEO_ENGINE_RUNTIME_ARN"
+    }
+  ],
+  "lambda_config": {
+    "memory_mb": 1024,
+    "timeout_seconds": 300,
+    "extra_packages": ["psycopg2-binary"]
+  },
+  "llm_tasks": [
+    {
+      "task_name": "score_testimonial",
+      "complexity": "STANDARD",
+      "description": "Score testimonial text across 5 dimensions (word_count, specific_result, five_star, competitor_mention, location_mention). Output structured JSON with per-dimension scores.",
+      "system_prompt_hint": "You are a content strategist scoring testimonials for marketing reuse"
+    }
+  ],
+  "metadata": {
+    "assigned_dev": "Jhosua",
+    "spec_authored_by": "Jhosua (back-converted from manual deploy)",
+    "spec_authored_date": "2026-04-28",
+    "links": {
+      "github_path": "agents/28-results-amplifier/"
+    }
+  }
+}

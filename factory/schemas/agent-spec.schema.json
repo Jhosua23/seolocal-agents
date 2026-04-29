@@ -1,0 +1,290 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://agenticpeak.com/schemas/agent-spec.schema.json",
+  "title": "AgenticPeak Agent Specification",
+  "description": "Canonical machine-readable spec for an agent. Read by the Agent Factory to generate main.py and deploy to AgentCore.",
+  "type": "object",
+  "required": [
+    "spec_version",
+    "agent_id",
+    "agent_name",
+    "tenant_id",
+    "phase",
+    "description",
+    "trigger",
+    "paths",
+    "ssm_params"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "spec_version": {
+      "type": "string",
+      "const": "1.0",
+      "description": "Schema version. Pinned to 1.0 — bump only when breaking schema changes."
+    },
+    "agent_id": {
+      "type": "string",
+      "pattern": "^agent-[a-z0-9-]+$",
+      "description": "Spec identifier — kebab-case, used for filename. Example: agent-01-free-website-audit. Distinct from agent_name (runtime name)."
+    },
+    "agent_name": {
+      "type": "string",
+      "pattern": "^[a-z][a-zA-Z0-9]*$",
+      "minLength": 3,
+      "maxLength": 50,
+      "description": "AgentCore runtime name — camelCase, no spaces/hyphens. Example: freeWebsiteAudit, pipelineMonitor."
+    },
+    "tenant_id": {
+      "type": "string",
+      "pattern": "^tenant-[0-9]{3}$",
+      "description": "Tenant identifier. SEO Local is tenant-001. Future tenants: tenant-002, etc."
+    },
+    "phase": {
+      "type": "string",
+      "enum": ["phase1", "phase2", "meta-phase1", "meta-phase2"],
+      "description": "Which build phase this agent belongs to."
+    },
+    "description": {
+      "type": "string",
+      "minLength": 30,
+      "maxLength": 500,
+      "description": "Plain-English description of what the agent does. Used as AgentCore runtime description."
+    },
+    "trigger": {
+      "type": "object",
+      "required": ["type"],
+      "additionalProperties": false,
+      "description": "How the agent is invoked.",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["http_webhook", "cron", "event_bus", "manual"],
+          "description": "Primary trigger mechanism. http_webhook = called via HTTP bridge. cron = EventBridge schedule. event_bus = SQS message from agenticpeak-agents bus. manual = invoked directly."
+        },
+        "schedule": {
+          "type": "string",
+          "description": "EventBridge cron expression. Required if type=cron. Example: 'rate(4 hours)' or 'cron(0 */4 * * ? *)'."
+        },
+        "event_pattern": {
+          "type": "object",
+          "description": "EventBridge event pattern for filtering. Required if type=event_bus."
+        },
+        "webhook_source": {
+          "type": "string",
+          "description": "Source system that calls this webhook. Optional documentation. Example: 'GHL workflow', 'Recurly webhook'."
+        }
+      }
+    },
+    "paths": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["path", "handler", "description"],
+        "additionalProperties": false,
+        "properties": {
+          "path": {
+            "type": "string",
+            "pattern": "^/[a-z0-9/-]+$",
+            "description": "URL path. Must start with /. Examples: /audit/website, /amplify/testimonial."
+          },
+          "handler": {
+            "type": "string",
+            "pattern": "^handle_[a-z_]+$",
+            "description": "Python function name in main.py that handles this path. Example: handle_audit. Generator creates this function."
+          },
+          "description": {
+            "type": "string",
+            "description": "What this specific path does."
+          },
+          "inputs": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["name", "type", "required"],
+              "properties": {
+                "name": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
+                "type": { "type": "string", "enum": ["string", "integer", "float", "boolean", "list", "dict"] },
+                "required": { "type": "boolean" },
+                "description": { "type": "string" },
+                "validation": { "type": "string", "description": "Optional validation rule. Example: 'http(s):// URL', 'GHL contact_id format'." }
+              }
+            }
+          },
+          "outputs": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["name", "type"],
+              "properties": {
+                "name": { "type": "string" },
+                "type": { "type": "string" },
+                "description": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "ssm_params": {
+      "type": "object",
+      "description": "SSM Parameter Store params this agent reads at runtime. Factory validates these exist before deploy.",
+      "required": ["required"],
+      "properties": {
+        "required": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Z][A-Z0-9_]*$"
+          },
+          "description": "Required SSM params. Agent fails to start if missing."
+        },
+        "optional": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Z][A-Z0-9_]*$"
+          },
+          "description": "Optional SSM params. Agent runs but with degraded functionality if missing."
+        }
+      }
+    },
+    "apis": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["ghl", "dataforseo", "anthropic", "google_places", "pagespeed", "local_falcon", "recurly", "heygen", "slack", "sendgrid", "s3", "rds", "dynamodb", "ses"]
+      },
+      "description": "External APIs this agent uses. Generator imports the right SDK + builds adapter calls."
+    },
+    "adapters": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Abstract adapter usage. Set true if agent uses the adapter; the factory injects the lib code.",
+      "properties": {
+        "crm": {
+          "type": "boolean",
+          "description": "Use CRMAdapter (GHL concrete). Factory imports lib/adapters/crm_adapter.py."
+        },
+        "billing": {
+          "type": "boolean",
+          "description": "Use BillingAdapter (Recurly concrete). Factory imports lib/adapters/billing_adapter.py."
+        }
+      }
+    },
+    "memory": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "AgentCore Memory configuration. Replaces RDS for state.",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Whether agent uses AgentCore Memory."
+        },
+        "strategy": {
+          "type": "string",
+          "enum": ["episodic", "semantic", "both"],
+          "description": "Memory strategy. episodic = action history. semantic = extracted facts. both = full memory."
+        },
+        "namespace_key": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$",
+          "description": "Input field name whose runtime value scopes the memory namespace. Example: 'lead_id' produces namespace 'tenant-001:lead-abc123'. Memory is per-entity isolated."
+        }
+      }
+    },
+    "chain_invokes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["target_agent_id", "trigger_condition"],
+        "additionalProperties": false,
+        "properties": {
+          "target_agent_id": {
+            "type": "string",
+            "pattern": "^agent-[a-z0-9-]+$",
+            "description": "agent_id of the agent being invoked. Factory looks up runtime ARN from SSM key VIDEO_ENGINE_RUNTIME_ARN, etc."
+          },
+          "trigger_condition": {
+            "type": "string",
+            "description": "Plain-English condition that triggers chain-invoke. Example: 'on milestone detected', 'on testimonial scored above 15'."
+          },
+          "ssm_arn_key": {
+            "type": "string",
+            "pattern": "^[A-Z][A-Z0-9_]*$",
+            "description": "SSM key holding the target agent's runtime ARN. Example: VIDEO_ENGINE_RUNTIME_ARN."
+          }
+        }
+      },
+      "description": "Other agents this agent calls. Factory generates the boto3 invoke code."
+    },
+    "lambda_config": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "memory_mb": {
+          "type": "integer",
+          "minimum": 128,
+          "maximum": 10240,
+          "default": 1024
+        },
+        "timeout_seconds": {
+          "type": "integer",
+          "minimum": 10,
+          "maximum": 900,
+          "default": 180
+        },
+        "extra_packages": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Extra pip packages beyond the standard set (bedrock-agentcore, boto3, requests). Example: ['anthropic', 'reportlab', 'psycopg2-binary']."
+        }
+      }
+    },
+    "llm_tasks": {
+      "type": "array",
+      "description": "List of LLM tasks this agent performs. Per Chuck's LLM-SELECTOR-SPEC.md (2026-04-27). Each task maps to a complexity tier: COMPLEX=Sonnet, STANDARD=Haiku (default), SIMPLE=Nova Micro. The factory's code generator emits one invoke_llm() call per task, with the correct complexity baked in. Empty array means the agent makes no LLM calls (e.g., pure rules-based agents like rank_check or lce_data).",
+      "items": {
+        "type": "object",
+        "required": ["task_name", "complexity"],
+        "additionalProperties": false,
+        "properties": {
+          "task_name": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*$",
+            "description": "Internal name for this task. Used as the variable name and code comment in generated main.py. Example: qualify_lead, generate_followup_message, score_testimonial."
+          },
+          "complexity": {
+            "type": "string",
+            "enum": ["COMPLEX", "STANDARD", "SIMPLE"],
+            "description": "Maps to a model tier per LLM-SELECTOR-SPEC.md. COMPLEX=claude-sonnet-4-6 (multi-step reasoning, content generation, strategy). STANDARD=claude-haiku-4-5-20251001 (classification, extraction, routing — DEFAULT). SIMPLE=amazon.nova-micro-v1:0 (lookups, formatting, yes/no). Never default to COMPLEX."
+          },
+          "description": {
+            "type": "string",
+            "description": "What this task does. Used as documentation and code comment in generated main.py."
+          },
+          "system_prompt_hint": {
+            "type": "string",
+            "description": "Optional. A one-line description of the system prompt role. Generator emits this as the system_prompt parameter. Example: 'You are a lead qualification specialist'."
+          }
+        }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "assigned_dev": { "type": "string" },
+        "spec_authored_by": { "type": "string" },
+        "spec_authored_date": { "type": "string", "format": "date" },
+        "links": {
+          "type": "object",
+          "properties": {
+            "markdown_spec": { "type": "string" },
+            "github_path": { "type": "string" }
+          }
+        }
+      }
+    }
+  }
+}

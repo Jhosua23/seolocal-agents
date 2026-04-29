@@ -1,0 +1,92 @@
+{
+  "spec_version": "1.0",
+  "agent_id": "agent-22-video-engine",
+  "agent_name": "videoEngine",
+  "tenant_id": "tenant-001",
+  "phase": "phase2",
+  "description": "Central AI video dispatcher. Any agent calls /video/generate with a video_type + contact fields. Validates whitelist, checks per-type feature flag, enforces 7-day dedupe, generates via HeyGen using Chuck's Digital Twin, polls to completion, delivers via GHL SMS + email, stamps tags + custom fields, writes audit log.",
+  "trigger": {
+    "type": "http_webhook",
+    "webhook_source": "Other agents (Agent 28 chain-invokes, GHL workflows)"
+  },
+  "paths": [
+    {
+      "path": "/video/generate",
+      "handler": "handle_generate",
+      "description": "Generate and deliver a personalized HeyGen video for a specific contact and video_type.",
+      "inputs": [
+        { "name": "video_type", "type": "string", "required": true, "description": "Which video template to use", "validation": "must be in supported_video_types whitelist" },
+        { "name": "contact_id", "type": "string", "required": true, "description": "GHL contact ID", "validation": "GHL contact_id format" },
+        { "name": "first_name", "type": "string", "required": true, "description": "Contact's first name for personalization" },
+        { "name": "city", "type": "string", "required": true, "description": "Contact's city for personalization" },
+        { "name": "business_name", "type": "string", "required": false, "description": "Contact's business name" },
+        { "name": "primary_gap", "type": "string", "required": false, "description": "Identified SEO gap (map_pack, gbp, website)" },
+        { "name": "ranking_keywords", "type": "list", "required": false, "description": "Top keywords contact ranks for" },
+        { "name": "delivery_channels", "type": "list", "required": false, "description": "Delivery channels: ['sms', 'email']" }
+      ],
+      "outputs": [
+        { "name": "ok", "type": "boolean", "description": "Success indicator" },
+        { "name": "status", "type": "string", "description": "active | inactive (feature flag off) | failed" },
+        { "name": "video_url", "type": "string", "description": "HeyGen-hosted video URL (if generated)" },
+        { "name": "delivery_results", "type": "dict", "description": "Per-channel delivery status" }
+      ]
+    },
+    {
+      "path": "/ping",
+      "handler": "handle_ping",
+      "description": "Health check.",
+      "inputs": [],
+      "outputs": [
+        { "name": "ok", "type": "boolean" },
+        { "name": "agent", "type": "string" },
+        { "name": "status", "type": "string" }
+      ]
+    }
+  ],
+  "ssm_params": {
+    "required": [
+      "GHL_API_KEY",
+      "HEYGEN_API_KEY"
+    ],
+    "optional": [
+      "GHL_LOCATION_ID",
+      "HEYGEN_AVATAR_ID",
+      "HEYGEN_VOICE_ID",
+      "HEYGEN_SPEED_TO_LEAD_ACTIVE",
+      "HEYGEN_HOT_LEAD_ACTIVE",
+      "HEYGEN_PRE_DEMO_ACTIVE",
+      "HEYGEN_CLOSED_WON_ACTIVE",
+      "HEYGEN_ONBOARDING_ACTIVE",
+      "HEYGEN_MONTHLY_RESULTS_ACTIVE",
+      "HEYGEN_HAND_RAISE_ACTIVE",
+      "HEYGEN_MILESTONE_ACTIVE",
+      "HEYGEN_CONFIG_S3_KEY",
+      "S3_REPORTS_BUCKET",
+      "SLACK_BOT_TOKEN",
+      "SLACK_CHUCK_USER_ID"
+    ]
+  },
+  "apis": ["ghl", "heygen", "s3", "slack"],
+  "adapters": {
+    "crm": true,
+    "billing": false
+  },
+  "memory": {
+    "enabled": false
+  },
+  "chain_invokes": [],
+  "lambda_config": {
+    "memory_mb": 1024,
+    "timeout_seconds": 600,
+    "extra_packages": []
+  },
+  "llm_tasks": [],
+  "metadata": {
+    "assigned_dev": "Jhosua",
+    "spec_authored_by": "Jhosua (back-converted from manual deploy)",
+    "spec_authored_date": "2026-04-27",
+    "links": {
+      "github_path": "agents/22-video-engine/"
+    }
+  }
+}
